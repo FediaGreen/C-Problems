@@ -1,0 +1,447 @@
+#include <cmath>
+#include <iostream>
+#include <stack>
+#include <map>
+#include <vector>
+#include <memory>
+#include <stdexcept>
+
+class Operation {
+ public:
+  virtual void OperationF(std::stack<double>& stack_of_values) = 0;
+  virtual ~Operation() = default;
+
+ protected:
+  void Correct(std::stack<double>& stack_of_values) {
+    if (stack_of_values.size() < valence) {
+      throw std::runtime_error("Incorrect expression");
+    }
+  }
+  bool IsZero(double num) {
+    if (std::abs(num) < 1e-9) {
+      return true;
+    }
+    return false;
+  }
+  size_t valence;
+};
+
+class One_valence_operations : public Operation {
+ public:
+  One_valence_operations() { valence = 1; }
+};
+
+class Two_valence_operations : public Operation {
+ public:
+  Two_valence_operations() { valence = 2; }
+};
+
+class Three_valence_operations : public Operation {
+ public:
+  Three_valence_operations() { valence = 3; }
+};
+
+class AddOp : public Operation {
+ public:
+  AddOp(double val) : value(val) {
+    valence = 0;
+  }
+  void OperationF(std::stack<double>& stack_of_values) override {
+    stack_of_values.push(value);
+  }
+ private:
+  double value;
+};
+
+class SinOp : public One_valence_operations {
+  void OperationF(std::stack<double>& stack_of_values) override {
+    Correct(stack_of_values);
+    double val = stack_of_values.top();
+    stack_of_values.pop();
+    stack_of_values.push(std::sin(val));
+  }
+};
+
+class CosOp : public One_valence_operations {
+  void OperationF(std::stack<double>& stack_of_values) override {
+    Correct(stack_of_values);
+    double val = stack_of_values.top();
+    stack_of_values.pop();
+    stack_of_values.push(std::cos(val));
+  }
+};
+
+class TgOp : public One_valence_operations {
+  void OperationF(std::stack<double>& stack_of_values) override {
+    Correct(stack_of_values);
+    double val = stack_of_values.top();
+    stack_of_values.pop();
+    double sin_ = std::sin(val);
+    double cos_ = std::cos(val);
+    if (IsZero(cos_)) {
+      throw std::runtime_error("Incorrect expression");
+    }
+    stack_of_values.push(sin_ / cos_);
+  }
+};
+
+class CtgOp : public One_valence_operations {
+  void OperationF(std::stack<double>& stack_of_values) override {
+    Correct(stack_of_values);
+    double val = stack_of_values.top();
+    stack_of_values.pop();
+    double sin_ = std::sin(val);
+    double cos_ = std::cos(val);
+    if (IsZero(sin_)) {
+      throw std::runtime_error("Incorrect expression");
+    }
+    stack_of_values.push(cos_ / sin_);
+  }
+};
+
+class ExpOp : public One_valence_operations {
+  void OperationF(std::stack<double>& stack_of_values) override {
+    Correct(stack_of_values);
+    double val = stack_of_values.top();
+    stack_of_values.pop();
+    stack_of_values.push(std::exp(val));
+  }
+};
+
+class LogOp : public One_valence_operations {
+  void OperationF(std::stack<double>& stack_of_values) override {
+    Correct(stack_of_values);
+    double val = stack_of_values.top();
+    if (val < 0) {
+      throw std::runtime_error("Incorrect expression");
+    }
+    stack_of_values.pop();
+    stack_of_values.push(std::log(val));
+  }
+};
+
+class SqrtOp : public One_valence_operations {
+  void OperationF(std::stack<double>& stack_of_values) override {
+    Correct(stack_of_values);
+    double val = stack_of_values.top();
+    if (val < 0) {
+      throw std::runtime_error("Incorrect expression");
+    }
+    stack_of_values.pop();
+    stack_of_values.push(std::sqrt(val));
+  }
+};
+
+class SumOp : public Two_valence_operations {
+ public:
+  void OperationF(std::stack<double>& stack_of_values) override {
+    Correct(stack_of_values);
+    double lhs = stack_of_values.top();
+    stack_of_values.pop();
+    double rhs = stack_of_values.top();
+    stack_of_values.pop();
+    stack_of_values.push(lhs + rhs);
+  }
+};
+
+class DifOp : public Two_valence_operations {
+  void OperationF(std::stack<double>& stack_of_values) override {
+    Correct(stack_of_values);
+    double lhs = stack_of_values.top();
+    stack_of_values.pop();
+    double rhs = stack_of_values.top();
+    stack_of_values.pop();
+    stack_of_values.push(rhs - lhs);
+  }
+};
+
+class MulOp : public Two_valence_operations {
+  void OperationF(std::stack<double>& stack_of_values) override {
+    Correct(stack_of_values);
+    double lhs = stack_of_values.top();
+    stack_of_values.pop();
+    double rhs = stack_of_values.top();
+    stack_of_values.pop();
+    stack_of_values.push(rhs * lhs);
+  }
+};
+
+class DivOp : public Two_valence_operations {
+  void OperationF(std::stack<double>& stack_of_values) override {
+    Correct(stack_of_values);
+    double lhs = stack_of_values.top();
+    if (IsZero(lhs)) {
+      throw std::runtime_error("Divide by zero");
+    }
+    stack_of_values.pop();
+    double rhs = stack_of_values.top();
+    stack_of_values.pop();
+    stack_of_values.push(rhs / lhs);
+  }
+};
+
+class Atan2Op : public Two_valence_operations {
+  void OperationF(std::stack<double>& stack_of_values) override {
+    Correct(stack_of_values);
+    double lhs = stack_of_values.top();
+    stack_of_values.pop();
+    double rhs = stack_of_values.top();
+    stack_of_values.pop();
+    if (IsZero(lhs) && IsZero(rhs)) {
+      throw std::runtime_error("Incorrect expression");
+    }
+    stack_of_values.push(std::atan2(rhs, lhs));
+  }
+};
+
+class PowOp : public Two_valence_operations {
+  void OperationF(std::stack<double>& stack_of_values) override {
+    Correct(stack_of_values);
+    double lhs = stack_of_values.top();
+    stack_of_values.pop();
+    double rhs = stack_of_values.top();
+    stack_of_values.pop();
+    if (lhs < 0) {
+      throw std::runtime_error("Incorrect expression");
+    }
+    stack_of_values.push(std::pow(rhs, lhs));
+  }
+};
+
+class MedianOp : public Three_valence_operations {
+  void OperationF(std::stack<double>& stack_of_values) override {
+    Correct(stack_of_values);
+    double third = stack_of_values.top();
+    stack_of_values.pop();
+    double second = stack_of_values.top();
+    stack_of_values.pop();
+    double first = stack_of_values.top();
+    stack_of_values.pop();
+    double median = 0;
+    if (second > third) {
+      std::swap(second, third);
+    }
+    if (first > second) {
+      std::swap(first, second);
+    }
+    if (second > third) {
+      median = third;
+    } else {
+      median = second;
+    }
+    stack_of_values.push(median);
+  }
+};
+
+struct Dictionary_of_operation {
+ public:
+  std::map<std::string, std::shared_ptr<Operation>> dict_;
+  Dictionary_of_operation() {
+    dict_["+"] = std::make_shared<SumOp>();
+    dict_["-"] = std::make_shared<DifOp>();
+    dict_["*"] = std::make_shared<MulOp>();
+    dict_["/"] = std::make_shared<DivOp>();
+    dict_["sin"] = std::make_shared<SinOp>();
+    dict_["cos"] = std::make_shared<CosOp>();
+    dict_["tg"] = std::make_shared<TgOp>();
+    dict_["ctg"] = std::make_shared<CtgOp>();
+    dict_["exp"] = std::make_shared<ExpOp>();
+    dict_["log"] = std::make_shared<LogOp>();
+    dict_["sqrt"] = std::make_shared<SqrtOp>();
+    dict_["atan2"] = std::make_shared<Atan2Op>();
+    dict_["pow"] = std::make_shared<PowOp>();
+    dict_["median"] = std::make_shared<MedianOp>();
+  }
+};
+
+class Calculator {
+ public:
+  Calculator() {
+    dictionary_ = Dictionary_of_operation();
+  }
+
+  double Calculate(std::string& s) {
+    try {
+      ParseData(s);
+    } catch(const std::runtime_error& exc) {
+      throw std::runtime_error("Incorrect expression");
+    }
+    for (size_t i = 0; i < parse_data_.size(); ++i) {
+      try {
+        parse_data_[i] -> OperationF(stack_);
+      } catch (std::runtime_error& exc) {
+        throw std::runtime_error("Incorrect expression");
+      }
+    }
+    double ans = stack_.top();
+    stack_.pop();
+    parse_data_.clear();
+    if (!stack_.empty()) {
+      while (!stack_.empty()) {
+        stack_.pop();
+      }
+      throw std::runtime_error("Incorrect expression");
+    }
+    return ans;
+  }
+
+ private:
+  void ParseData(std::string& data) {
+    std::string name = "";
+    for (size_t i = 0; i < data.size(); ++i) {
+      if (data[i] == ' ') {
+        try {
+          Process(name);
+        } catch(const std::runtime_error& exp) {
+          throw std::runtime_error("Incorrect expression");
+        }
+        name = "";
+      } else {
+        name += data[i];
+      }
+    }
+    Process(name);
+  }
+
+  void Process(std::string& name) {
+    if (name == "") {
+      return;
+    }
+    double number = 0;
+    bool is_operation = true;
+    try {
+      is_operation = IsOperation(name);
+    } catch (std::runtime_error& exc) {
+      throw std::runtime_error("Incorrect expression");
+    }
+    if (is_operation) {
+      parse_data_.push_back(dictionary_.dict_[name]);
+    } else {
+      number = ToNum(name);
+      parse_data_.push_back(std::make_shared<AddOp>(number));
+    }
+  }
+
+  bool IsOperation(std::string& name) {
+    int cnt_of_commas = 0;
+    auto it = dictionary_.dict_.find(name);
+    if (it != dictionary_.dict_.end()) {
+      return true;
+    }
+    for (size_t i = 0; i < name.size(); ++i) {
+      if (i == 0 && name[i] == '-') {
+        continue;
+      }
+      if ((i == name.size() - 1 || i == 0) && (name[i] == '.' || name[i] == ',')) {
+        throw std::runtime_error("Invalid expression");
+      }
+      if (name[i] == ',' || name[i] == '.') {
+        ++cnt_of_commas;
+        if (cnt_of_commas > 1) {
+          throw std::runtime_error("Invalid expression");
+        }
+        continue;
+      }
+      int symbol = static_cast<int>(name[i]);
+      if (symbol < 48 || symbol > 57) {
+        throw std::runtime_error("Invalid expression");
+      }
+    }
+    return false;
+  }
+  
+  double ToNum(std::string& token) { // token is correct
+    int size_token = static_cast<int> (token.size());
+    int idx_comma = 0;
+    bool fractional = false;
+    double value = 0;
+    double ans = 0;
+    bool IsNegative = false;
+    for (size_t i = 0; i < token.size(); ++i) {
+      if (i == 0 && token[i] == '-') {
+        IsNegative = true;
+        continue;
+      }
+      if (token[i] == ',' || token[i] == '.') {
+        fractional = true;
+        ans = value;
+        value = 0;
+        idx_comma = int(i);
+        continue;
+      }
+      value *= 10;
+      value += double(static_cast<int>(token[i]) - 48);
+    }
+    if (fractional) {
+      ans += value / std::pow(10, (size_token - idx_comma - 1));
+    } else {
+      ans = value;
+    }
+    if (IsNegative) {
+      return -1 * ans;
+    }
+    return ans;
+  }
+
+  std::vector<std::shared_ptr<Operation>> parse_data_;
+  Dictionary_of_operation dictionary_;
+  std::stack<double> stack_;
+};
+
+int main() {
+  Calculator cltr;
+  std::string expr1 = "10   10 +";
+  std::string expr2 = "   2   1    /";
+  std::string expr3 = "  0   -1 *";
+  std::string expr4 = "3    8   7    *   +     1  -";
+  std::string expr5 = "0.557    134,456 +";
+  std::string expr6 = "2   3 -";
+  std::string expr7 = "10 sin";
+  std::string expr8 = "   2  cos";
+  std::string expr9 = "  0   tg";
+  std::string expr10 = "6  ctg";
+  std::string expr11 = "0   exp";
+  std::string expr12 = "3 log";
+  std::string expr13 = "6  sqrt";
+  std::string expr14 = "3 4 atan2";
+  std::string expr15 = "134,456   2 pow";
+  std::string expr16 = "1 2 3 median";
+  try {
+    std::cout << cltr.Calculate(expr1) << '\n'; // 20
+
+    std::cout << cltr.Calculate(expr2) << '\n'; // 2
+
+    std::cout << cltr.Calculate(expr3) << '\n'; // -0
+
+    std::cout << cltr.Calculate(expr4) << '\n'; // 58
+
+    std::cout << cltr.Calculate(expr5) << '\n'; // 135.013
+
+    std::cout << cltr.Calculate(expr6) << '\n'; // -1
+
+    std::cout << cltr.Calculate(expr7) << '\n'; // -0.544021
+
+    std::cout << cltr.Calculate(expr8) << '\n'; // -0.416147
+
+    std::cout << cltr.Calculate(expr9) << '\n'; // 0
+
+    std::cout << cltr.Calculate(expr10) << '\n'; // -3.43635
+
+    std::cout << cltr.Calculate(expr11) << '\n'; // 1
+
+    std::cout << cltr.Calculate(expr12) << '\n'; // 1.09861
+
+    std::cout << cltr.Calculate(expr13) << '\n'; // 2.44949
+
+    std::cout << cltr.Calculate(expr14) << '\n'; // 0.643501
+
+    std::cout << cltr.Calculate(expr15) << '\n'; // 18078.4
+
+    std::cout << cltr.Calculate(expr16) << '\n'; // 2
+
+    // correct
+
+   } catch (std::runtime_error& exc) {
+    std::cout << "Runtime error : " << exc.what() << '\n';
+  }
+}
