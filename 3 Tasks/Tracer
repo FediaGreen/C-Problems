@@ -1,0 +1,49 @@
+#include <iostream>
+#include <source_location>
+#include <string>
+
+#ifdef NDEBUG
+  #define trace ((void)0)
+#else
+  #define trace Tracer tracer_obj{}
+#endif
+
+class Tracer{
+ public:
+  Tracer(const std::source_location location = std::source_location::current()) {
+    function_name_ = location.function_name();
+    file_name_ = location.file_name();
+    line_number_ = location.line();
+    std::cout << "open " << function_name_ << " in " << file_name_ << " in "
+              << line_number_ - 1 << '\n';
+  }
+  ~Tracer() {
+    std::cout << "close " << function_name_ << " in " << file_name_ << " in "
+              << line_number_ - 1 << '\n';
+  }
+ private:
+  std::string function_name_;
+  std::string file_name_;
+  size_t line_number_;
+};
+
+void F1() {
+  trace;
+  std::cout << "do F1" << '\n';
+}
+
+void F2() {
+  trace;
+  F1();
+  std::cout << "do F2" << '\n';
+}
+
+void F3() {
+  std::cout << "do F3" << '\n';
+}
+
+int main() {
+  F1();
+  F2();
+  F3();
+}

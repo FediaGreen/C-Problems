@@ -1,0 +1,72 @@
+#include <iostream>
+#include <cmath>
+#include <cassert>
+#include <numbers>
+#include <vector>
+
+class Shape {
+ public:
+  virtual double GetArea() const = 0;
+  virtual double GetPerimeter() const = 0;
+  virtual ~Shape() = default;
+};
+
+class Triangle final: public Shape {
+ public:
+  Triangle (double a, double b, double c) : len_1(a), len_2(b), len_3(c) {}
+  double GetPerimeter() const override final {
+    return len_1 + len_2 + len_3;
+  }
+  double GetArea() const override final {
+    double p = GetPerimeter() / 2;
+    double s = sqrt(p * (p - len_1)) * sqrt((p - len_2) * (p - len_3));
+    return s;
+  }
+
+ private:
+  double len_1;
+  double len_2;
+  double len_3;
+};
+
+class Square final: public Shape {
+ public:
+  Square(double l) : len(l) {}
+  double GetPerimeter() const override final {
+    return 4 * len;
+  }
+  double GetArea() const override final {
+    return len * len;
+  }
+
+ private:
+  double len;
+};
+
+class Circle final: public Shape {
+ public: 
+  Circle(double r) : rad(r) {}
+  double GetPerimeter() const override final {
+    return 2 * std::numbers::pi * rad;
+  }
+  double GetArea() const override final {
+    return std::numbers::pi * rad * rad;
+  }
+
+ private:
+  double rad;
+};
+
+
+int main() {
+  std::vector<Shape*> figures;
+  figures.push_back(new Triangle(3, 4, 5));
+  figures.push_back(new Square(3));
+  figures.push_back(new Circle(1));
+  for (auto figure : figures) {
+    std::cout << figure->GetPerimeter() << " " << figure->GetArea() << std::endl;
+  }
+  for (auto figure : figures) {
+    delete figure;
+  }
+}
